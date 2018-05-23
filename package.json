@@ -1,0 +1,30 @@
+{
+    "name": "feelfood_nodejs",
+    "version": "1.0.0",
+    "description": "Nodejs backend to FeelFood product. ApiRest maked based in MEAN",
+    "main": "app.js",
+    "author": "FeelFood contributors",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/FeelFood/FeelFood_NodeJs.git"
+    },
+    "dependencies": {
+        "bcrypt": "^1.0.3",
+        "bcrypt-nodejs": "0.0.3",
+        "body-parser": "1.5.1",
+        "express": "4.7.1",
+        "express-validator": "^4.3.0",
+        "jsonwebtoken": "^5.7.0",
+        "method-override": "2.1.2",
+        "mongoose": "4.10.0",
+        "mongoose-title-case": "0.0.4",
+        "mongoose-validator": "^1.3.2",
+        "morgan": "^1.9.0",
+        "nodemailer": "^4.4.2",
+        "param-case": "^2.1.1",
+        "passport": "^0.3.2",
+        "passport-jwt": "^2.2.1",
+        "validator": "^9.2.0"
+    }
+}
