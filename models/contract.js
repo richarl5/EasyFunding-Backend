@@ -12,7 +12,8 @@ let contractSchema = new mongoose.Schema({
     expireDate: { type: Date },
     threshold: { type: Number },
     robustness: { type: Number },
-    signature: { type: String }
+    signature: { type: String },
+    keysGenerated: { type: Boolean, default: false },
 });
 
 contractSchema.pre('save', function (next) {

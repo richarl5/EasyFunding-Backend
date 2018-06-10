@@ -68,15 +68,15 @@ router.route('/user/all')
     .get(passport.authenticate('jwt', { session: false }), userCtrl.findAllUsers);
 
 router.route('/contract')
-    .get(passport.authenticate('jwt', { session: false }), contractCtrl.findContract)
+    .get(passport.authenticate('jwt', { session: false }), contractCtrl.checkConditions, contractCtrl.findContract)
     .post(passport.authenticate('jwt', { session: false }), contractCtrl.addContract)
     .put(passport.authenticate('jwt', { session: false }), contractCtrl.updateContractById);
 router.route('/contract/all')
-    .get(passport.authenticate('jwt', { session: false }), contractCtrl.findAllContracts);
+    .get(passport.authenticate('jwt', { session: false }), contractCtrl.findAllContractsPopulation);
 
 router.route('/donation')
     .get(passport.authenticate('jwt', { session: false }), donationCtrl.findDonation)
-    .post(passport.authenticate('jwt', { session: false }), donationCtrl.addDonation)
+    .post(passport.authenticate('jwt', { session: false }), donationCtrl.checkConditions, donationCtrl.addDonation)
     .put(passport.authenticate('jwt', { session: false }), donationCtrl.updateDonationById);
 router.route('/donation/all')
     .get(passport.authenticate('jwt', { session: false }), donationCtrl.findAllDonations);

@@ -2,7 +2,29 @@
 
 const Contract = require('../models/contract'),
     ApiHelper = require('../helpers/api'),
+    Donation = require('../models/donation'),
     User = require('../models/user');
+
+exports.checkConditions = function (req, res, next) {
+    Contract.findById(req.query.id, function (err, contract) {
+        if (err) throw (err);
+        if (!err && contract != null) {
+            if ((contract.expireDate < Date.now()) && (contract.keysGenerated === false)) {
+                //Do Paillier
+                console.log('Do Paillier');
+                /*Donation.find({contract_id: contract.id}, function (err, donations) {
+                    if (err) return res.status(500).send({message: 'Error on data base: ' + err});
+                    if (!donations) next();
+                    console.log('#Donations: ' + donations.length );
+                    const k = donations.length * (contract.robustness / 100);
+                    console.log('k = ' + k.toPrecision(1));
+                    next();
+                });*/
+                next();
+            } else next();
+        }
+    });
+};
 
 exports.addContract = (req, res) => {
     console.log(req.body);
@@ -30,11 +52,6 @@ exports.updateContractById = (req, res) => ApiHelper.updateModelById(req, res, C
 exports.findAllContracts = (req, res) => ApiHelper.findAllModels(req, res, Contract);
 
 exports.findAllContractsPopulation = (req, res) => {
-    //Example to try create a population
-    let population = {
-        path: User.modelName, match: { username: req.query.username },
-        //path: Restaurant.modelName, match: { restaurant: req.query.restaurant }
-    };
-
+    let population = { path: 'owner_id', select: {'wallet': 0, 'signupDate': 0, 'lastLogin': 0, 'nextLastLogin': 0,} };
     ApiHelper.findAllModelsPopulate(res, res, Contract, population);
 };

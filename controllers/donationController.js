@@ -5,6 +5,23 @@ const Donation = require('../models/donation'),
     User = require('../models/user'),
     Contract = require('../models/contract');
 
+exports.checkConditions = function (req, res, next) {
+    let conditions = { contract_id: req.body.contract_id,  user_id: req.body.user_id};
+    Donation.findOne(conditions, function (err, donation) {
+        if (err) return res.status(500).send({message: 'Error on data base: ' + err});
+        if (!donation) {
+            Contract.findById(req.body.contract_id, function (err, contract) {
+                if (err) throw (err);
+                if (!err && contract != null) {
+                    if (contract.expireDate > Date.now()) {
+                        next();
+                    } else return res.status(400).send({message: 'Donation already done or contract expired.'});
+                }
+            });
+        } else return res.status(400).send({message: 'Donation already done or contract expired.'});
+    });
+};
+
 exports.addDonation = (req, res) => {
     console.log(req.body);
     let newDonation = new Donation(req.body);
