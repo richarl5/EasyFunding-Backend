@@ -3,6 +3,8 @@
 const Contract = require('../models/contract'),
     ApiHelper = require('../helpers/api'),
     Donation = require('../models/donation'),
+    Secret = require('../helpers/secret-sharing'),
+    ContractKey = require('../models/contractKey'),
     User = require('../models/user');
 
 exports.checkConditions = function (req, res, next) {
@@ -10,17 +12,28 @@ exports.checkConditions = function (req, res, next) {
         if (err) throw (err);
         if (!err && contract != null) {
             if ((contract.expireDate < Date.now()) && (contract.keysGenerated === false)) {
-                //Do Paillier
-                console.log('Do Paillier');
-                /*Donation.find({contract_id: contract.id}, function (err, donations) {
+                const sharing = new Secret.SecretSharing();
+                Donation.find({contract_id: contract.id}, function (err, donations) {
                     if (err) return res.status(500).send({message: 'Error on data base: ' + err});
                     if (!donations) next();
-                    console.log('#Donations: ' + donations.length );
                     const k = donations.length * (contract.robustness / 100);
-                    console.log('k = ' + k.toPrecision(1));
-                    next();
-                });*/
-                next();
+                    let strMsg = contract.id.toString();
+                    let hexMsg = Buffer.from(strMsg, 'utf8').toString('hex');
+                    const {keys,p} = sharing.getShares(k.toPrecision(1),donations.length,hexMsg);
+                    let contractKey = new ContractKey();
+                    let array = new Array(0);
+                    for (let i = 0; i < donations.length; i++) {
+                        array.push(donations[i].user_id.toString());
+                    }
+                    contractKey.p = p;
+                    contractKey.contract_id = contract.id;
+                    contractKey.keys = keys;
+                    contractKey.user_id = array;
+                    console.log(contractKey);
+                    contractKey.save()
+                        .then(resp => next())
+                        .catch(err => res.status(500).send(`There was an error model, please try again later. Error: ${err.message}`));
+                });
             } else next();
         }
     });
