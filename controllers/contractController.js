@@ -50,11 +50,8 @@ exports.addContract = (req, res) => {
 };
 
 exports.findContract = (req, res) => {
-    Contract.findById(req.query.id, function (err, order) {
-        if (err) return res.status(500).send({message: 'Error on data base: ' + err});
-        if (!order) return res.status(500).send({message: 'Contract not found.'});
-        res.status(200).jsonp(order);
-    });
+    let population = { path: 'owner_id', select: {'wallet': 0, 'signupDate': 0, 'lastLogin': 0, 'nextLastLogin': 0,} };
+    ApiHelper.findOneModel(req, res, Contract, {'_id': req.query.id}, population);
 };
 
 
