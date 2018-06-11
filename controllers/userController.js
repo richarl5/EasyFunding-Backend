@@ -63,7 +63,7 @@ exports.findAllUsers = (req, res) => ApiHelper.findAllModels(req, res, User);
 
 exports.findUser = (req, res) => {
     let conditions = { _id: req.query.id };
-    ApiHelper.findOneModel(req, res, User, conditions, 'orders');
+    ApiHelper.findModels(req, res, User, conditions);
 };
 
 exports.setToken = (req, res) => {

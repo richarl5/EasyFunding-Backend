@@ -5,6 +5,7 @@ const Contract = require('../models/contract'),
     Donation = require('../models/donation'),
     Secret = require('../helpers/secret-sharing'),
     ContractKey = require('../models/contractKey'),
+    bigInt = require('big-integer'),
     User = require('../models/user');
 
 exports.checkConditions = function (req, res, next) {
@@ -23,7 +24,7 @@ exports.checkConditions = function (req, res, next) {
                     let contractKey = new ContractKey();
                     let array = new Array(0);
                     for (let i = 0; i < donations.length; i++) {
-                        array.push(donations[i].user_id.toString());
+                        array.push({id: donations[i].user_id.toString(), received: false});
                     }
                     contractKey.p = p;
                     contractKey.contract_id = contract.id;
@@ -31,11 +32,95 @@ exports.checkConditions = function (req, res, next) {
                     contractKey.user_id = array;
                     console.log(contractKey);
                     contractKey.save()
-                        .then(resp => next())
+                        .then(resp => {
+                            contract.keysGenerated = true;
+                            contract.save()
+                                .then(resp => next())
+                                .catch(err => res.status(500).send(`There was an error model, please try again later. Error: ${err.message}`));
+                        })
                         .catch(err => res.status(500).send(`There was an error model, please try again later. Error: ${err.message}`));
                 });
             } else next();
         }
+    });
+};
+
+const unlock = (req, res, k) => {
+    ContractKey.findOne({ contract_id: req.body.contract_id}, function (err, contractKey) {
+        if (err) throw (err);
+        if (!err && contractKey != null) {
+            if (contractKey.keys_received >= k) {
+                let keys = new Array(0);
+                for (let i = 0; i < contractKey.user_id.length; i++) {
+                    if (contractKey.user_id[i].received) {
+                        keys.push({key: contractKey.keys[i].key, id: parseInt(contractKey.keys[i].id)});
+                    }
+                }
+                const sharing = new Secret.SecretSharing();
+                let secretRecovered = sharing.secretRecovery(keys,contractKey.p);
+                secretRecovered = (Buffer.from(bigInt(secretRecovered).toString(16), 'hex')).toString();
+                if (secretRecovered === req.body.contract_id) {
+                    let conditions = { contract_id: req.body.contract_id };
+                    Donation.find(conditions, function (err, donations) {
+                        if (err) return res.status(500).send({message: 'Error on data base: ' + err});
+                        if (!err && donations != null) {
+                            let total_amount = 0;
+                            for (let i = 0; i < donations.length; i++) {
+                                total_amount += donations[i].amount_donated;
+                            }
+                            Contract.findById(req.body.contract_id, function (err, contract) {
+                                if (err) return res.status(500).send({message: 'Error on data base: ' + err});
+                                if (!contract) return res.status(500).send({message: 'User not found.'});
+                                contract.executed = true;
+                                contract.save()
+                                    .then(resp => {
+                                        User.findById(contract.owner_id, function (err, user) {
+                                            if (err) return res.status(500).send({message: 'Error on data base: ' + err});
+                                            if (!user) return res.status(500).send({message: 'User not found.'});
+                                            user.wallet = total_amount;
+                                            user.save()
+                                                .then(resp => res.status(200).send({message: 'Contract has been executed.'}))
+                                                .catch(err => res.status(500).send(`There was an error saving model, please try again later. Error: ${err.message}`));
+                                        });
+                                    })
+                                    .catch(err => res.status(500).send(`There was an error saving model, please try again later. Error: ${err.message}`));
+                            });
+                        }
+                    });
+                }
+            } else return res.status(202).send({message: 'Keys remaining for execute contract:' + (k - contractKey.keys_received)});
+        }
+    });
+};
+
+exports.keyReceive = (req, res) => {
+    let conditions = { contract_id: req.body.contract_id };
+    Donation.find(conditions, function (err, donations) {
+        if (err) return res.status(500).send({message: 'Error on data base: ' + err});
+        if (donations) {
+            Contract.findById(req.body.contract_id, function (err, contract) {
+                if (err) throw (err);
+                if (!err && contract != null) {
+                    if (contract.expireDate < Date.now() && contract.keysGenerated) {
+                        ContractKey.findOne({ contract_id: req.body.contract_id}, function (err, contractKey) {
+                            if (err) throw (err);
+                            if (!err && contractKey != null) {
+                                for (let i = 0; i < contractKey.user_id.length; i++) {
+                                    if (contractKey.user_id[i].id.toString() === req.body.user_id) {
+                                        contractKey.user_id[i].received = true;
+                                        contractKey.keys_received += 1;
+                                        const k = donations.length * (contract.robustness / 100);
+                                        contractKey.save()
+                                            .then(resp => unlock(req,res,k.toPrecision(1)))
+                                            .catch(err => res.status(500).send(`There was an error saving model, please try again later. Error: ${err.message}`));
+                                    }
+                                }
+                            }
+                        });
+                    } else return res.status(400).send({message: 'Donation already done or contract expired.'});
+                }
+            });
+        } else return res.status(400).send({message: 'You have no donations on this contract.'});
     });
 };
 

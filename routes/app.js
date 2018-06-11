@@ -74,6 +74,9 @@ router.route('/contract')
 router.route('/contract/all')
     .get(passport.authenticate('jwt', { session: false }), contractCtrl.findAllContractsPopulation);
 
+router.route('/contract/unlock')
+    .post(passport.authenticate('jwt', { session: false }), contractCtrl.keyReceive);
+
 router.route('/donation')
     .get(passport.authenticate('jwt', { session: false }), donationCtrl.findDonation)
     .post(passport.authenticate('jwt', { session: false }), donationCtrl.checkConditions, donationCtrl.addDonation)

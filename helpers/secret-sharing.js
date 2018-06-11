@@ -11,7 +11,6 @@ const construction = (t,n,k,p) => {
             let a;
             do{
                 a = bigInt.randBetween(bigInt(2).pow(255), bigInt(2).pow(256));
-                console.log(bigInt(a).compareTo(bigInt(p))+'\n'+bigInt(a).isPrime());
             } while (bigInt(a).eq(0) && bigInt(a).compareTo(bigInt(p)) > 0 && bigInt(a).isPrime());
             coeff.push(a.toString())
         }
@@ -31,8 +30,8 @@ const recovery =  function (keys , p) {
         let j = 0;
         keys.reduce((sum, next) => {
             if (j !== i) {
-                const xTemp = bigInt(next.x);
-                const xoTemp = bigInt(keys[i].x);
+                const xTemp = bigInt(next.id);
+                const xoTemp = bigInt(keys[i].id);
                 const sub = xTemp.subtract(xoTemp);
                 numerator = numerator.multiply(xTemp);
                 denominator = denominator.multiply(sub);

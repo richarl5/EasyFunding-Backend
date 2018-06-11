@@ -14,6 +14,7 @@ let contractSchema = new mongoose.Schema({
     robustness: { type: Number },
     signature: { type: String },
     keysGenerated: { type: Boolean, default: false },
+    executed: { type: Boolean, default: false }
 });
 
 contractSchema.pre('save', function (next) {
