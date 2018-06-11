@@ -72,7 +72,7 @@ router.route('/contract')
     .post(passport.authenticate('jwt', { session: false }), contractCtrl.addContract)
     .put(passport.authenticate('jwt', { session: false }), contractCtrl.updateContractById);
 router.route('/contract/all')
-    .get(passport.authenticate('jwt', { session: false }), contractCtrl.findAllContractsPopulation);
+    .get(passport.authenticate('jwt', { session: false }), contractCtrl.findAllContracts);
 
 router.route('/contract/unlock')
     .post(passport.authenticate('jwt', { session: false }), contractCtrl.keyReceive);
