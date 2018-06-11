@@ -7,6 +7,7 @@ mongoose.Promise = global.Promise;
 
 let contractSchema = new mongoose.Schema({
     owner_id: { type: Schema.Types.ObjectId, ref: 'users', required: true },
+    name: { type: String },
     description: { type: String },
     createDate: { type: Date, default: Date.now() },
     expireDate: { type: Date },
