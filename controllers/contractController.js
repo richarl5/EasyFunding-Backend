@@ -136,7 +136,25 @@ exports.addContract = (req, res) => {
 
 exports.findContract = (req, res) => {
     let population = { path: 'owner_id', select: {'wallet': 0, 'signupDate': 0, 'lastLogin': 0, 'nextLastLogin': 0,} };
-    ApiHelper.findOneModel(req, res, Contract, {'_id': req.query.id}, population);
+    Contract.findOne({'_id': req.query.id})
+        .populate(population)
+        .exec(function(err, contract) {
+            if (err)
+                res.status(500).send({message: 'Contrato no encontrado'});
+            Donation.find({'contract_id': req.query.id}).exec(
+                function(err, donations) {
+                    if (err)
+                        res.status(500).send({message: `Internal server error: ${err}`});
+                    let amount_now = 0;
+                    for (let i = 0; i < donations.length; i++) {
+                        amount_now = amount_now + donations[i].amount_donated;
+                        console.log(amount_now);
+                    }
+                    res.status(200).json({contract: contract, amount_now: amount_now.toString()});
+                }
+            );
+        });
+    //ApiHelper.findOneModel(req, res, Contract, {'_id': req.query.id}, population);
 };
 
 
