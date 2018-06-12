@@ -63,7 +63,11 @@ let userSchema = new mongoose.Schema({
     lastLogin: Date,
     nextLastLogin: Date,
     token: String,
-    resetToken: String
+    resetToken: String,
+    publicKey: {
+        e: String,
+        n: String
+    }
 });
 
 userSchema.plugin(titlize, {

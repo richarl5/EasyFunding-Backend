@@ -10,12 +10,7 @@ let donationSchema = new mongoose.Schema({
     user_id: { type: Schema.Types.ObjectId, ref: 'users', required: true },
     createDate: { type: Date, default: Date.now() },
     amount_donated: { type: Number, required: true},
-    signature: { type: String }
-});
-
-donationSchema.pre('save', function (next) {
-    this.signature = 'ServerSignature000';
-    return next();
+    signature: { type: String, required: true}
 });
 
 let model = mongoose.model('donations', donationSchema);

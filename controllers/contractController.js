@@ -107,12 +107,14 @@ exports.keyReceive = (req, res) => {
                             if (!err && contractKey != null) {
                                 for (let i = 0; i < contractKey.user_id.length; i++) {
                                     if (contractKey.user_id[i].id.toString() === req.body.user_id) {
+                                        if (!contractKey.user_id[i].received) {
                                         contractKey.user_id[i].received = true;
                                         contractKey.keys_received += 1;
                                         const k = donations.length * (contract.robustness / 100);
                                         contractKey.save()
                                             .then(resp => unlock(req,res,k.toPrecision(1)))
                                             .catch(err => res.status(500).send(`There was an error saving model, please try again later. Error: ${err.message}`));
+                                        } else return res.status(200).send({message: 'Your key has already been received.'});
                                     }
                                 }
                             }
@@ -143,12 +145,10 @@ exports.findContract = (req, res) => {
                 res.status(500).send({message: 'Contrato no encontrado'});
             Donation.find({'contract_id': req.query.id}).exec(
                 function(err, donations) {
-                    if (err)
-                        res.status(500).send({message: `Internal server error: ${err}`});
+                    if (err) res.status(500).send({message: `Internal server error: ${err}`});
                     let amount_now = 0;
                     for (let i = 0; i < donations.length; i++) {
                         amount_now = amount_now + donations[i].amount_donated;
-                        console.log(amount_now);
                     }
                     res.status(200).json({contract: contract, amount_now: amount_now.toString()});
                 }

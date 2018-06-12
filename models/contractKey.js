@@ -18,13 +18,7 @@ let contractKeysSchema = new mongoose.Schema({
         id: { type: String }
     }],
     p: { type: String, required: true},
-    keys_received: { type: Number, default: 0},
-    signature: { type: String }
-});
-
-contractKeysSchema.pre('save', function (next) {
-    this.signature = 'ServerSignature000';
-    return next();
+    keys_received: { type: Number, default: 0}
 });
 
 let model = mongoose.model('contractKeys', contractKeysSchema);
