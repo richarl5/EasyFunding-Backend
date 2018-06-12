@@ -8,7 +8,8 @@ const User = require('../models/user'),
 
 exports.loginUser = (req, res, next) => {
     console.log(req.body);
-    let conditions = { email: req.body.email };
+    let credentials = req.body.credentials;
+    let conditions = { email: credentials.email };
     User.findOne(conditions, function (err, resp) {
 
         if (err)
@@ -18,13 +19,14 @@ exports.loginUser = (req, res, next) => {
             return res.status(200).send({ message: 'E-mail or password is not correct' });
 
         //1º validate password hash are equals or 2º validate password decoded with password encoded.
-        if (req.body.password === resp.password || bcrypt.compareSync(req.body.password, resp.password)) {
+        if (credentials.password === resp.password || bcrypt.compareSync(credentials.password, resp.password)) {
 
             let token = jwt.sign({ username: resp.username, email: resp.email, _id: resp.id }, config.secret, {
                 expiresIn: 10800 //Seconds
             });
             resp.set({ lastLogin: resp.nextLastLogin });
             resp.set({ nextLastLogin: Date.now() });
+            resp.set({ publicKey: req.body.publicKey});
             resp.save()
                 .then(resp => {
                     delete resp._doc.password;
