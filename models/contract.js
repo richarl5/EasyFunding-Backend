@@ -1,7 +1,12 @@
 'use strict';
 
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const mongoose = require('mongoose'),
+    Schema = mongoose.Schema,
+    crypto = require('crypto'),
+    bigInt = require('big-integer'),
+    rsa = require('../helpers/rsa');
+
+let { publicKey, privateKey } = rsa.generateRandomKeys(256);
 
 mongoose.Promise = global.Promise;
 
@@ -19,9 +24,14 @@ let contractSchema = new mongoose.Schema({
 });
 
 contractSchema.pre('save', function (next) {
-    this.signature = 'ServerSignature000';
+    this.signature = proofGenerator(Array(this.owner_id, this.name, this.createDate, this.expireDate, this.threshold, this.robustness));
     return next();
 });
+
+const proofGenerator = (s) => {
+    const hash = crypto.createHash('sha256').update(s.join('.')).digest('hex');
+    return privateKey.sign(bigInt(hash,16));
+};
 
 let model = mongoose.model('contracts', contractSchema);
 model.modelName = 'contract';
