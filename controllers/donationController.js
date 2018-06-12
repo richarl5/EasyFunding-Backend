@@ -3,7 +3,9 @@
 const Donation = require('../models/donation'),
     ApiHelper = require('../helpers/api'),
     User = require('../models/user'),
-    Contract = require('../models/contract');
+    crypto = require('crypto'),
+    Contract = require('../models/contract'),
+    rsa = require('../helpers/rsa');
 
 exports.checkConditions = function (req, res, next) {
     let conditions = { contract_id: req.body.contract_id,  user_id: req.body.user_id};
@@ -14,7 +16,19 @@ exports.checkConditions = function (req, res, next) {
                 if (err) throw (err);
                 if (!err && contract != null) {
                     if (contract.expireDate > Date.now()) {
-                        next();
+                        User.findById(req.body.user_id, function (err, user) {
+                            if (err) throw (err);
+                            if (!err && user != null) {
+                                const publicKey = new rsa.PublicKeyRSA(user.publicKey.e, user.publicKey.n);
+                                let clientHash = publicKey.verify(req.body.signature);
+                                clientHash = Buffer.from(clientHash.toString(16), 'hex').toString('hex');
+                                const hash = crypto.createHash('sha256').update(Array(req.body.contract_id, req.body.user_id, req.body.amount_donated.toString()).join('.').toString()).digest('hex');
+                                if (clientHash === hash) {
+                                    console.log('Donation signature verified.');
+                                    next();
+                                } else return res.status(400).send({message: 'Donation signature verification not success.'});
+                            }
+                        });
                     } else return res.status(400).send({message: 'Donation already done or contract expired.'});
                 }
             });
